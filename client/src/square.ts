@@ -1,4 +1,4 @@
-import { List } from './list';
+import { List, nil } from './list';
 
 
 export type Color = "white" | "red" | "orange" | "yellow" | "green" | "blue" | "purple";
@@ -83,3 +83,59 @@ export const fromJson = (data: unknown): Square => {
     throw new Error(`type ${typeof data} is not a valid square`);
   }
 }
+
+  /**
+ * Retrieves the root of the subtree at the specified path within a given square.
+ * @param sq The square to navigate.
+ * @param path The path to the desired subtree root.
+ * @returns The subtree root at the specified path.
+ * @throws An error if direction is invalid.
+ */
+  export const getSubtree = (sq: Square, path: Path): Square => {
+    if (path.kind === "nil" || sq.kind === "solid"){
+      return sq;
+    } else {
+      const dir = path.hd;
+      switch (dir) {
+        case "NW":
+        return getSubtree(sq.nw, path.tl);
+        case "NE":
+        return getSubtree(sq.ne, path.tl);
+        case "SW":
+        return getSubtree(sq.sw, path.tl);
+        case "SE":
+        return getSubtree(sq.se, path.tl);
+        default:
+          throw new Error(`Invalid direction ${dir}`);
+      }
+    }
+  };
+
+  /**
+ * Replaces the subtree at the specified path within a given square with a new square.
+ * @param sq The original square.
+ * @param path The path to the subtree root to be replaced.
+ * @param newSubtree The new subtree to replace the existing one.
+ * @returns A new square with the specified subtree replaced.
+ * @throws An error if the path leads to a non-existent subtree.
+ */
+  export const setSubtree = (sq: Square, path: Path, newSubtree: Square): Square => {
+    if (path.kind === "nil" || sq.kind === "solid") {
+      return newSubtree;
+    }
+    if (sq.kind !== "split") {
+      throw new Error('Cannot set subtree on a non-split square');
+    }
+    switch(path.hd){
+      case "NW":
+        return split(setSubtree(sq.nw, path.tl, newSubtree), sq.ne, sq.sw, sq.se);
+      case "NE":
+        return split(sq.nw, setSubtree(sq.ne, path.tl, newSubtree), sq.sw, sq.se);
+      case "SW":
+        return split(sq.nw, sq.ne, setSubtree(sq.sw, path.tl, newSubtree), sq.se);
+      case "SE":
+        return split(sq.nw, sq.ne, sq.sw, setSubtree(sq.se, path.tl, newSubtree));
+      default:
+              throw new Error('Invalid direction');
+          }
+        };

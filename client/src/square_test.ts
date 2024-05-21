@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import { solid, split, toJson, fromJson } from './square';
-
+import { solid, split, toJson, fromJson, getSubtree, setSubtree } from './square';
+import { cons, nil } from './list';
 
 describe('square', function() {
 
@@ -41,4 +41,39 @@ describe('square', function() {
         split(solid("green"), s1, solid("yellow"), s1));
   });
 
+  it('getSubtree', function() {
+    const square1 = split(solid("blue"), solid("red"), solid("orange"), solid("green"));
+    const square2 = split(solid("purple"), split(solid("purple"), solid("red"), solid("orange"), solid("blue")),
+                      solid("green"), solid("orange"));
+    const square3 = split(solid("blue"), split(solid("blue"), solid("red"), solid("yellow"),
+                    split(solid("green"), solid("purple"), solid("orange"), solid("purple"))), solid("purple"), solid("orange"));
+    const square4 = split(solid("blue"), split(solid("blue"), solid("white"), solid("red"),
+                    split(split(solid("blue"), solid("white"), solid("red"), solid("green")),
+                                solid("white"), solid("yellow"), solid("purple"))),
+                                solid("purple"), solid("red"));
+
+    // 0-1-many heuristic - base case: nil path
+    assert.deepStrictEqual(getSubtree(solid("red"), nil), solid("red"));
+
+    // 0-1-many heuristic - base case: nil path
+    assert.deepStrictEqual(getSubtree(square1, nil), square1);
+
+    // 0-1-many heuristic - 1 recursive call
+    assert.deepStrictEqual(getSubtree(square1, cons("NW", nil)), solid("blue"));
+
+    // 0-1-many heuristic - 1 recursive call
+    assert.deepStrictEqual(getSubtree(square1, cons("NE", nil)), solid("red"));
+
+    // 0-1-many heuristic - >1 recursive call
+    assert.deepStrictEqual(getSubtree(square2, cons("NE", cons("SW", nil))), solid("orange"));
+
+    // 0-1-many heuristic - >1 recursive call
+    assert.deepStrictEqual(getSubtree(square3, cons("NE", cons("SE", cons("NW", nil)))), solid("green"));
+
+    // All direction test
+    assert.deepStrictEqual(getSubtree(square4, cons("NE", cons("SE", cons("NW", cons("NE", nil))))), solid("white"));
+
 });
+  it('setSubtree', function() { 
+
+  })});
