@@ -1,45 +1,66 @@
 import React, { Component } from "react";
-import { solid, split, Path, Square } from './square';
-import { SquareElem } from './square_draw';
-
+import { solid, split, Square } from './square';
+import { FileEditor } from "./FileEditor";
+import { FilePicker } from "./FilePicker";
+import { nil, cons, compact_list } from "./list";
+import { AssocList, contains_key, get_keys, get_value } from "./assoc";
 
 /** Describes set of possible app page views */
-type Page = {kind: ""}; // TODO: modify to set of relevant page states         
+type Page = 
+  | { kind: "picker" }
+  | { kind: "editor", name: string };
 
+/** Stores state for the current page of the app to show */
 type AppState = {
-  show: Page;   // Stores state for the current page of the app to show
+  show: Page;
+  designs: AssocList<Square>; // Stores the designs
 };
 
 /**
- * Displays the square application containing either a list of files names
- * to pick from or an editor for files files
+ * Displays the square application containing either a list of file names
+ * to pick from or an editor for files
  */
 export class App extends Component<{}, AppState> {
 
   constructor(props: {}) {
     super(props);
-
-    this.state = {show: {kind: ""}}; // TODO: initialize starting view
+    this.state = {
+      show: { kind: "picker" },
+      designs: nil
+    };
   }
   
   render = (): JSX.Element => {
-    const sq: Square = split(solid("blue"), solid("orange"), solid("purple"), solid("red"));
+    const show = this.state.show;
+    const designs = this.state.designs;
 
-    // TODO (Q2): Replace return with commented out line to render full editor
-    //            component instead of always a static square
-    return <SquareElem width={600n} height={600n} square={sq}
-              onClick={this.doSquareClick}/>;
-    // return <FileEditor initialState={sq}>
 
-    // TODO (Q4): render the correct component or loading message depending on 
-    // current view instead of always displaying editor
+    if (show.kind === "picker") {
+      const designNames = compact_list(get_keys(designs));
+      return <FilePicker onCreate={this.doHandleCreateClick} designNames={designNames} onOpen={this.doHandleOpenClick} />;
+    } else if (show.kind === "editor") {
+      const initialSquare: Square = contains_key(show.name, designs)
+        ? get_value(show.name, designs)
+        : split(solid("blue"), solid("orange"), solid("purple"), solid("red"));
+      return <FileEditor initialState={initialSquare} designName={show.name} onSave={this.doHandleSaveClick} onBack={this.doHandleBackClick} />;
+    }
+    return <div>Loading...</div>;
   };
 
-  doSquareClick = (path: Path): void => {
-    console.log(path);
-    alert("Stop that!");
+  doHandleCreateClick = (name: string): void => {
+    this.setState({ show: { kind: "editor", name } });
   };
 
-  // TODO: write functions here to handle switching between app pages and
-  //       for accessing server through server.ts helper functions
+  doHandleSaveClick = (name: string, root: Square): void => {
+    this.setState(prevState => ({ designs: cons([name, root], prevState.designs), show: { kind: "picker" }}));
+    console.log(`Saved design: ${name}`, root);
+  };
+
+  doHandleBackClick = (): void => {
+    this.setState({ show: { kind: "picker" } });
+  };
+
+  doHandleOpenClick = (name: string): void => {
+    this.setState({ show: { kind: "editor", name } });
+  };
 }

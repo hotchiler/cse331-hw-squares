@@ -1,4 +1,4 @@
-import { List, nil } from './list';
+import { List} from './list';
 
 
 export type Color = "white" | "red" | "orange" | "yellow" | "green" | "blue" | "purple";
